@@ -1894,6 +1894,24 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c08d65885ee38876c4f86fa503fb49d7b507c2b62552df7c70b2fce627e06381"
 
 [[package]]
+name = "pallet-broker"
+version = "0.6.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "904983f117ff92ee24b251f2a883ff01b6f8e9063649877f3892ecbb516e3cbd"
+dependencies = [
+ "bitvec",
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
+ "parity-scale-codec",
+ "scale-info",
+ "sp-arithmetic",
+ "sp-core",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
 name = "pallet-order-creator"
 version = "0.1.0"
 dependencies = [
@@ -1901,6 +1919,7 @@ dependencies = [
  "frame-support",
  "frame-system",
  "log",
+ "pallet-broker",
  "parity-scale-codec",
  "scale-info",
  "sp-core",
