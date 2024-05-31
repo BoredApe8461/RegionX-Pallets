@@ -1,0 +1,38 @@
+[package]
+name = "pallet-order-creator"
+authors = ["RegionX"]
+version = "0.1.0"
+license = "MIT"
+edition = "2021"
+
+[package.metadata.docs.rs]
+targets = ["x86_64-unknown-linux-gnu"]
+
+[dependencies]
+log = { workspace = true }
+codec = { workspace = true, default-features = false, features = ["derive"] }
+scale-info = {  workspace = true,  default-features = false, features = ["derive"] }
+
+# Substrate
+frame-benchmarking = { workspace = true, default-features = false, optional = true }
+frame-support = { workspace = true, default-features = false }
+frame-system = {  workspace = true, default-features = false }
+sp-io = { workspace = true, default-features = false }
+sp-core = { workspace = true, default-features = false }
+sp-runtime = { workspace = true, default-features = false }
+
+[features]
+default = ["std"]
+runtime-benchmarks = ["frame-benchmarking/runtime-benchmarks"]
+std = [
+	"log/std",
+	"codec/std",
+	"scale-info/std",
+	"sp-io/std",
+	"sp-core/std",
+	"sp-runtime/std",
+	"frame-benchmarking/std",
+	"frame-support/std",
+	"frame-system/std",
+]
+try-runtime = [ "frame-support/try-runtime" ]
