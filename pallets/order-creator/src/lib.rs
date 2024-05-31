@@ -5,6 +5,8 @@
 use frame_support::traits::Currency;
 use frame_system::WeightInfo;
 pub use pallet::*;
+use pallet_broker::Timeslice;
+use sp_runtime::SaturatedConversion;
 
 mod types;
 pub use crate::types::*;
@@ -40,6 +42,10 @@ pub mod pallet {
 		/// The admin origin for managing the order creation.
 		type AdminOrigin: EnsureOrigin<Self::RuntimeOrigin>;
 
+		/// Number of Relay-chain blocks per timeslice.
+		#[pallet::constant]
+		type TimeslicePeriod: Get<RCBlockNumberOf<Self>>;
+
 		/// Weight Info
 		type WeightInfo: WeightInfo;
 	}
@@ -61,6 +67,23 @@ pub mod pallet {
 	#[pallet::getter(fn configuration)]
 	pub type Configuration<T: Config> = StorageValue<_, ConfigRecordOf<T>, OptionQuery>;
 
+	/// A reference sale start, used for determining the current sale phase.
+	///
+	/// This can be set to the start of any sale as long as the sale duration hasn't changed in the
+	/// meantime.
+	///
+	/// Generally, it is best practice to set this to the start of the latest sale when initializing
+	/// the state of this pallet.
+	///
+	/// *WARNING*: If the sale duration changes after this is set, it should be updated to ensure we
+	/// don't create redundant orders or miss order creation.
+	///
+	/// Ideally, we would read the current sale state directly from the Coretime chain. However,
+	/// that would require using something like ISMP and a relay infrastructure.
+	#[pallet::storage]
+	#[pallet::getter(fn reference_sale_start)]
+	pub type ReferenceSaleStart<T: Config> = StorageValue<_, ConfigRecordOf<T>, OptionQuery>;
+
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T: Config> {}
@@ -68,6 +91,13 @@ pub mod pallet {
 	#[pallet::error]
 	#[derive(PartialEq)]
 	pub enum Error<T> {}
+
+	#[pallet::hooks]
+	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
+		fn on_initialize(_now: BlockNumberFor<T>) -> Weight {
+			Weight::zero()
+		}
+	}
 
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
@@ -103,10 +133,17 @@ pub mod pallet {
 			T::AdminOrigin::ensure_origin_or_root(origin)?;
 
 			CoretimeRequirements::<T>::set(requirements);
-
 			// TODO: event
 
 			Ok(())
+		}
+	}
+
+	impl<T: Config> Pallet<T> {
+		pub(crate) fn current_timeslice() -> Timeslice {
+			let latest_rc_block = T::RCBlockNumberProvider::current_block_number();
+			let timeslice_period = T::TimeslicePeriod::get();
+			(latest_rc_block / timeslice_period).saturated_into()
 		}
 	}
 }
