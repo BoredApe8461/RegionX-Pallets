@@ -11,6 +11,9 @@ use sp_runtime::SaturatedConversion;
 mod types;
 pub use crate::types::*;
 
+mod dispatcher;
+pub use crate::dispatcher::*;
+
 pub type BalanceOf<T> = <<T as crate::Config>::RelaychainCurrency as Currency<
 	<T as frame_system::Config>::AccountId,
 >>::Balance;
@@ -43,6 +46,9 @@ pub mod pallet {
 
 		/// The admin origin for managing the order creation.
 		type AdminOrigin: EnsureOrigin<Self::RuntimeOrigin>;
+
+		/// Type responsible for dispatching coretime orders to the RegionX parachain.
+		type OrderDispatcher: OrderDispatcher;
 
 		/// Number of Relay-chain blocks per timeslice.
 		#[pallet::constant]
@@ -133,7 +139,8 @@ pub mod pallet {
 					end: next_order.saturating_add(config.region_length),
 					core_occupancy: generic.core_occupancy,
 				};
-				// TODO: create order
+				// TODO: account for the dispatcher weight consumption:
+				T::OrderDispatcher::dispatch(requirements);
 				weight
 			} else {
 				weight
