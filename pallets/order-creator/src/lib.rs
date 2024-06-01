@@ -55,13 +55,6 @@ pub mod pallet {
 	#[pallet::pallet]
 	pub struct Pallet<T>(_);
 
-	/// The coretime requirements for the parachain.
-	///
-	/// Orders will be made based on this.
-	#[pallet::storage]
-	#[pallet::getter(fn coretime_requirements)]
-	pub type CoretimeRequirements<T: Config> = StorageValue<_, Requirements, OptionQuery>;
-
 	/// The current configuration of the Coretime chain.
 	///
 	/// Can be modified by the `AdminOrigin`.
@@ -87,6 +80,13 @@ pub mod pallet {
 	#[pallet::storage]
 	#[pallet::getter(fn next_order)]
 	pub type NextOrder<T: Config> = StorageValue<_, Timeslice, OptionQuery>;
+
+	/// The coretime requirements for the parachain.
+	///
+	/// Orders will be made based on this.
+	#[pallet::storage]
+	#[pallet::getter(fn coretime_requirements)]
+	pub type CoretimeRequirements<T: Config> = StorageValue<_, GenericRequirements, OptionQuery>;
 
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
@@ -119,6 +119,20 @@ pub mod pallet {
 			};
 
 			if Self::current_timeslice() >= next_order {
+				weight += T::DbWeight::get().reads(1);
+				let Some(generic) = CoretimeRequirements::<T>::get() else {
+					log::warn!(
+						target: LOG_TARGET,
+						"The coretime requirements are not set",
+					);
+					return weight;
+				};
+
+				let requirements = OrderRequirements {
+					begin: next_order,
+					end: next_order.saturating_add(config.region_length),
+					core_occupancy: generic.core_occupancy,
+				};
 				// TODO: create order
 				weight
 			} else {
@@ -172,7 +186,7 @@ pub mod pallet {
 		#[pallet::weight(10_000)] // TODO
 		pub fn set_coretime_requirements(
 			origin: OriginFor<T>,
-			requirements: Option<Requirements>,
+			requirements: Option<GenericRequirements>,
 		) -> DispatchResult {
 			T::AdminOrigin::ensure_origin_or_root(origin)?;
 
