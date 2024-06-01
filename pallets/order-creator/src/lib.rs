@@ -15,6 +15,8 @@ pub type BalanceOf<T> = <<T as crate::Config>::RelaychainCurrency as Currency<
 	<T as frame_system::Config>::AccountId,
 >>::Balance;
 
+const LOG_TARGET: &str = "runtime::order-creator";
+
 #[frame_support::pallet]
 pub mod pallet {
 	use super::*;
@@ -63,16 +65,6 @@ pub mod pallet {
 	/// The current configuration of the Coretime chain.
 	///
 	/// Can be modified by the `AdminOrigin`.
-	#[pallet::storage]
-	#[pallet::getter(fn configuration)]
-	pub type Configuration<T: Config> = StorageValue<_, ConfigRecordOf<T>, OptionQuery>;
-
-	/// The start of the latest bulk period.
-	///
-	/// When setting up the pallet, this should be set to the start of the latest bulk period by the
-	/// `AdminOrigin`.
-	///
-	/// After that, the pallet will keep this up to date by itself.
 	///
 	/// *WARNING*: If the sale duration changes on the Coretime chain, the `AdminOrigin` should
 	/// update the `Configuration` to match the new config on the Coretime chain. If not updated, we
@@ -81,13 +73,20 @@ pub mod pallet {
 	/// Ideally, we would read the current sale state directly from the Coretime chain. However,
 	/// that would require using something like ISMP and a relay infrastructure.
 	#[pallet::storage]
-	#[pallet::getter(fn bulk_period_start)]
-	pub type BulkPeriodStart<T: Config> = StorageValue<_, Timeslice, OptionQuery>;
+	#[pallet::getter(fn configuration)]
+	pub type Configuration<T: Config> = StorageValue<_, ConfigRecordOf<T>, OptionQuery>;
 
-	/// The timeslice when the last order was made.
+	/// The timeslice at which the next order should be made.
+	///
+	/// When setting up the pallet, if the parachain has already procured Coretime for the upcoming
+	/// bulk period, this should be set to the start of the upcoming bulk period. Otherwise, we can
+	/// set this to the start of the current bulk period so that we attempt to procure Coretime
+	/// for the upcoming bulk period.
+	///
+	/// After initially set, the pallet will keep this up to date by itself.
 	#[pallet::storage]
-	#[pallet::getter(fn last_order)]
-	pub type LastOrder<T: Config> = StorageValue<_, Timeslice, ValueQuery>;
+	#[pallet::getter(fn next_order)]
+	pub type NextOrder<T: Config> = StorageValue<_, Timeslice, OptionQuery>;
 
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
@@ -95,20 +94,36 @@ pub mod pallet {
 
 	#[pallet::error]
 	#[derive(PartialEq)]
-	pub enum Error<T> {
-		/// The `AdminOrigin` provided an invalid bulk period start.
-		InvalidBulkPeriodStart,
-	}
+	pub enum Error<T> {}
 
 	#[pallet::hooks]
 	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
 		fn on_initialize(_now: BlockNumberFor<T>) -> Weight {
-			let last_order = LastOrder::<T>::get();
-			let config = Configuration::<T>::get();
+			let mut weight = T::DbWeight::get().reads(1);
 
-			//let current_sale_start = ReferenceSaleStart::<T>::get().saturating_add(config.)
+			let Some(config) = Configuration::<T>::get() else {
+				log::warn!(
+					target: LOG_TARGET,
+					"Coretime chain configuration not set",
+				);
+				return weight;
+			};
 
-			Weight::zero()
+			weight += T::DbWeight::get().reads(1);
+			let Some(next_order) = NextOrder::<T>::get() else {
+				log::warn!(
+					target: LOG_TARGET,
+					"The timeslice for the next order not set",
+				);
+				return weight;
+			};
+
+			if Self::current_timeslice() >= next_order {
+				// TODO: create order
+				weight
+			} else {
+				weight
+			}
 		}
 	}
 
@@ -132,24 +147,16 @@ pub mod pallet {
 			Ok(())
 		}
 
-		/// Set the start of the latest bulk period.
+		/// Set the timeslice at which we create the next order.
 		///
 		/// - `origin`: Must be Root or pass `AdminOrigin`.
-		/// - `bulk_period_start`: The start of the latest bulk period.
+		/// - `next_order`: The timeslice at which to create the next order.
 		#[pallet::call_index(1)]
 		#[pallet::weight(10_000)] // TODO
-		pub fn set_bulk_period_start(
-			origin: OriginFor<T>,
-			bulk_period_start: Timeslice,
-		) -> DispatchResult {
+		pub fn set_next_order(origin: OriginFor<T>, next_order: Timeslice) -> DispatchResult {
 			T::AdminOrigin::ensure_origin_or_root(origin)?;
 
-			// Sanity check:
-			ensure!(
-				bulk_period_start <= Self::current_timeslice(),
-				Error::<T>::InvalidBulkPeriodStart
-			);
-			BulkPeriodStart::<T>::put(bulk_period_start);
+			NextOrder::<T>::put(next_order);
 
 			// TODO: event
 
