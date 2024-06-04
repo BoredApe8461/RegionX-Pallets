@@ -139,8 +139,14 @@ pub mod pallet {
 					end: next_order.saturating_add(config.region_length),
 					core_occupancy: generic.core_occupancy,
 				};
+				if let Err(e) = T::OrderDispatcher::dispatch(requirements) {
+					log::error!(
+						target: LOG_TARGET,
+						"Failed to dispatch order: {:?}",
+						e
+					);
+				}
 				// TODO: account for the dispatcher weight consumption:
-				T::OrderDispatcher::dispatch(requirements);
 				weight
 			} else {
 				weight
