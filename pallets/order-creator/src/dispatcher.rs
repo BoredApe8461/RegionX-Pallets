@@ -1,5 +1,6 @@
 // TODO: should this be a common file which is used by all the modules?
-use crate::{OrderRequirements, LOG_TARGET};
+use crate::{types::OrderCallCreator, OrderRequirements, LOG_TARGET};
+use codec::Encode;
 use core::marker::PhantomData;
 use sp_runtime::DispatchResult;
 use xcm::latest::prelude::*;
@@ -13,10 +14,28 @@ pub trait OrderDispatcher {
 pub struct DefaultOrderDispatcher<T: crate::Config + pallet_xcm::Config>(PhantomData<T>);
 impl<T: crate::Config + pallet_xcm::Config> OrderDispatcher for DefaultOrderDispatcher<T> {
 	fn dispatch(requirements: OrderRequirements) -> DispatchResult {
-		let message = Xcm(vec![]);
+		let call = T::OrderCallCreator::create_order_call(requirements);
+
+		let fee = 100u128; // TODO
+
+		// `ref_time` = 53372000, we will round up to: 100000000.
+		// `proof_size` = 6156, we will round up to: 7000.
+		let call_weight = Weight::from_parts(100000000, 7000);
+
+		let message = Xcm(vec![
+			Instruction::BuyExecution {
+				fees: (MultiLocation::parent(), fee).into(),
+				weight_limit: Unlimited, // TODO
+			},
+			Instruction::Transact {
+				origin_kind: OriginKind::SovereignAccount,
+				require_weight_at_most: call_weight,
+				call: call.into(),
+			},
+		]);
 
 		match pallet_xcm::Pallet::<T>::send_xcm(Here, MultiLocation::parent(), message) {
-				Ok(_) => log::debug!(
+			Ok(_) => log::debug!(
 				target: LOG_TARGET,
 				"Coretime order sent successfully"
 			),

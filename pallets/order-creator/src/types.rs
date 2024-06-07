@@ -5,6 +5,9 @@ use pallet_broker::{ConfigRecord, PartsOf57600, Timeslice};
 use scale_info::TypeInfo;
 use sp_runtime::traits::BlockNumberProvider;
 
+/// Order identifier.
+pub type OrderId = u32;
+
 /// Relay chain block number.
 pub type RCBlockNumberOf<T> =
 	<<T as crate::Config>::RCBlockNumberProvider as BlockNumberProvider>::BlockNumber;
@@ -33,10 +36,7 @@ pub struct GenericRequirements {
 	pub core_occupancy: PartsOf57600,
 }
 
-pub type OrderId = u32;
-
-#[derive(Encode, Decode)]
-enum CoretimeProviderCalls {
-	#[codec(index = 0)]
-	CreateOrder(ParaId, OrderRequirements),
+pub trait OrderCallCreator {
+	/// Returns the runtime call which will create an order on the RegionX parachain.
+	fn create_order_call(order_requirements: OrderRequirements) -> Vec<u8>;
 }

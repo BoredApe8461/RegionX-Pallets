@@ -50,6 +50,9 @@ pub mod pallet {
 		/// Type responsible for dispatching coretime orders to the RegionX parachain.
 		type OrderDispatcher: OrderDispatcher;
 
+		/// Type which will return the scale encoded call for creating an order.
+		type OrderCallCreator: OrderCallCreator;
+
 		/// Number of Relay-chain blocks per timeslice.
 		#[pallet::constant]
 		type TimeslicePeriod: Get<RCBlockNumberOf<Self>>;
