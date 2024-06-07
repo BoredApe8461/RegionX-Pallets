@@ -1,4 +1,5 @@
 use codec::{Decode, Encode, MaxEncodedLen};
+pub use cumulus_primitives_core::ParaId;
 use frame_system::pallet_prelude::BlockNumberFor;
 use pallet_broker::{ConfigRecord, PartsOf57600, Timeslice};
 use scale_info::TypeInfo;
@@ -30,4 +31,12 @@ pub struct OrderRequirements {
 pub struct GenericRequirements {
 	/// The minimum fraction of the core that the region should occupy.
 	pub core_occupancy: PartsOf57600,
+}
+
+pub type OrderId = u32;
+
+#[derive(Encode, Decode)]
+enum CoretimeProviderCalls {
+	#[codec(index = 0)]
+	CreateOrder(ParaId, OrderRequirements),
 }

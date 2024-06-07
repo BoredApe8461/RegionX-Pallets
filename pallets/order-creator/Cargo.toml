@@ -14,6 +14,7 @@ codec = { workspace = true, default-features = false, features = ["derive"] }
 scale-info = {  workspace = true,  default-features = false, features = ["derive"] }
 
 # Substrate
+cumulus-primitives-core = { workspace = true, default-features = false }
 frame-benchmarking = { workspace = true, default-features = false, optional = true }
 frame-support = { workspace = true, default-features = false }
 frame-system = {  workspace = true, default-features = false }
@@ -21,6 +22,11 @@ sp-io = { workspace = true, default-features = false }
 sp-core = { workspace = true, default-features = false }
 sp-runtime = { workspace = true, default-features = false }
 pallet-broker = { workspace = true, default-features = false }
+pallet-xcm = { workspace = true, default-features = false }
+
+xcm = { workspace = true, default-features = false }
+xcm-builder = { workspace = true, default-features = false }
+xcm-executor = { workspace = true, default-features = false }
 
 [features]
 default = ["std"]
@@ -28,6 +34,7 @@ runtime-benchmarks = ["frame-benchmarking/runtime-benchmarks"]
 std = [
 	"log/std",
 	"codec/std",
+	"cumulus-primitives-core/std",
 	"scale-info/std",
 	"sp-io/std",
 	"sp-core/std",
@@ -36,5 +43,9 @@ std = [
 	"frame-support/std",
 	"frame-system/std",
     "pallet-broker/std",
+    "pallet-xcm/std",
+	"xcm/std",
+	"xcm-builder/std",
+	"xcm-executor/std",
 ]
 try-runtime = [ "frame-support/try-runtime" ]
