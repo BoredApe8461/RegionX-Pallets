@@ -2,6 +2,7 @@
 use crate::{types::OrderCallCreator, OrderRequirements, LOG_TARGET};
 use codec::Encode;
 use core::marker::PhantomData;
+use frame_support::weights::WeightToFee;
 use sp_runtime::DispatchResult;
 use xcm::latest::prelude::*;
 
@@ -16,11 +17,10 @@ impl<T: crate::Config + pallet_xcm::Config> OrderDispatcher for DefaultOrderDisp
 	fn dispatch(requirements: OrderRequirements) -> DispatchResult {
 		let call = T::OrderCallCreator::create_order_call(requirements);
 
-		let fee = 100u128; // TODO
-
 		// `ref_time` = 53372000, we will round up to: 100000000.
 		// `proof_size` = 6156, we will round up to: 7000.
 		let call_weight = Weight::from_parts(100000000, 7000);
+		let fee = T::RegionXWeightToFee::weight_to_fee(&call_weight);
 
 		let message = Xcm(vec![
 			Instruction::BuyExecution {

@@ -14,10 +14,6 @@ pub use crate::types::*;
 mod dispatcher;
 pub use crate::dispatcher::*;
 
-pub type BalanceOf<T> = <<T as crate::Config>::RelaychainCurrency as Currency<
-	<T as frame_system::Config>::AccountId,
->>::Balance;
-
 const LOG_TARGET: &str = "runtime::order-creator";
 
 #[frame_support::pallet]
@@ -25,7 +21,12 @@ pub mod pallet {
 	use super::*;
 	use frame_support::{
 		pallet_prelude::*,
-		traits::{fungible::Mutate, Get},
+		traits::{
+			fungible::{Inspect, Mutate},
+			tokens::Balance,
+			Get,
+		},
+		weights::WeightToFee,
 	};
 	use frame_system::pallet_prelude::*;
 	use sp_runtime::traits::BlockNumberProvider;
@@ -38,6 +39,12 @@ pub mod pallet {
 
 		/// The relay chain currency used for coretime procurement.
 		type RelaychainCurrency: Mutate<Self::AccountId>;
+
+		/// Relay chain balance type
+		type Balance: Balance
+			+ Into<<Self::RelaychainCurrency as Inspect<Self::AccountId>>::Balance>
+			+ Into<cumulus_primitives_core::AssetInstance>
+			+ From<u32>;
 
 		/// A means of getting the current relay chain block.
 		///
@@ -52,6 +59,9 @@ pub mod pallet {
 
 		/// Type which will return the scale encoded call for creating an order.
 		type OrderCallCreator: OrderCallCreator;
+
+		/// Types for getting the fee for RegionX parachain calls.
+		type RegionXWeightToFee: WeightToFee<Balance = Self::Balance>;
 
 		/// Number of Relay-chain blocks per timeslice.
 		#[pallet::constant]
