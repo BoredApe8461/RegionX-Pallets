@@ -41,7 +41,7 @@ pub mod pallet {
 		type RelaychainCurrency: Mutate<Self::AccountId>;
 
 		/// Relay chain balance type
-		type Balance: Balance
+		type RelayBalance: Balance
 			+ Into<<Self::RelaychainCurrency as Inspect<Self::AccountId>>::Balance>
 			+ Into<cumulus_primitives_core::AssetInstance>
 			+ From<u32>;
@@ -61,7 +61,7 @@ pub mod pallet {
 		type OrderCallCreator: OrderCallCreator;
 
 		/// Types for getting the fee for RegionX parachain calls.
-		type RegionXWeightToFee: WeightToFee<Balance = Self::Balance>;
+		type RegionXWeightToFee: WeightToFee<Balance = Self::RelayBalance>;
 
 		/// Number of Relay-chain blocks per timeslice.
 		#[pallet::constant]
@@ -109,7 +109,14 @@ pub mod pallet {
 
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
-	pub enum Event<T: Config> {}
+	pub enum Event<T: Config> {
+		/// Configuration of the coretime chain was set.
+		ConfigurationSet,
+		/// Timeslice for the next order was set.
+		TimesliceSet { timeslice: Timeslice },
+		/// An order was created.
+		OrderCreated,
+	}
 
 	#[pallet::error]
 	#[derive(PartialEq)]
@@ -172,7 +179,7 @@ pub mod pallet {
 		/// Set the configuration of the Coretime chain.
 		///
 		/// - `origin`: Must be Root or pass `AdminOrigin`.
-		/// - `config`: The configuration the Coretime chain.
+		/// - `config`: The configuration of the Coretime chain.
 		#[pallet::call_index(0)]
 		#[pallet::weight(10_000)] // TODO
 		pub fn set_configuration(
@@ -182,8 +189,7 @@ pub mod pallet {
 			T::AdminOrigin::ensure_origin_or_root(origin)?;
 
 			Configuration::<T>::put(config);
-			// TODO: event
-
+			Self::deposit_event(Event::ConfigurationSet);
 			Ok(())
 		}
 
@@ -198,8 +204,7 @@ pub mod pallet {
 
 			NextOrder::<T>::put(next_order);
 
-			// TODO: event
-
+			Self::deposit_event(Event::TimesliceSet { timeslice: next_order });
 			Ok(())
 		}
 
@@ -217,8 +222,8 @@ pub mod pallet {
 			T::AdminOrigin::ensure_origin_or_root(origin)?;
 
 			CoretimeRequirements::<T>::set(requirements);
-			// TODO: event
 
+			Self::deposit_event(Event::OrderCreated);
 			Ok(())
 		}
 	}
