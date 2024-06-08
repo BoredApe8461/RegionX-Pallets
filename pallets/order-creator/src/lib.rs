@@ -2,7 +2,6 @@
 
 #![cfg_attr(not(feature = "std"), no_std)]
 
-use frame_support::traits::Currency;
 use frame_system::WeightInfo;
 pub use pallet::*;
 use pallet_broker::Timeslice;
@@ -41,7 +40,7 @@ pub mod pallet {
 		type RelaychainCurrency: Mutate<Self::AccountId>;
 
 		/// Relay chain balance type
-		type Balance: Balance
+		type RelayBalance: Balance
 			+ Into<<Self::RelaychainCurrency as Inspect<Self::AccountId>>::Balance>
 			+ Into<cumulus_primitives_core::AssetInstance>
 			+ From<u32>;
@@ -61,7 +60,7 @@ pub mod pallet {
 		type OrderCallCreator: OrderCallCreator;
 
 		/// Types for getting the fee for RegionX parachain calls.
-		type RegionXWeightToFee: WeightToFee<Balance = Self::Balance>;
+		type RegionXWeightToFee: WeightToFee<Balance = Self::RelayBalance>;
 
 		/// Number of Relay-chain blocks per timeslice.
 		#[pallet::constant]
@@ -109,7 +108,16 @@ pub mod pallet {
 
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
-	pub enum Event<T: Config> {}
+	pub enum Event<T: Config> {
+		/// Configuration of the coretime chain was set.
+		ConfigurationSet { configuration: ConfigRecordOf<T> },
+		/// Timeslice for the next order was set.
+		NextOrderScheduled { next_order: Timeslice },
+		/// Coretime requirements got set.
+		///
+		/// If `None` it means that the parachain will stop with Coretime procurement.
+		CoretimeRequirementSet { requirements: Option<GenericRequirements> },
+	}
 
 	#[pallet::error]
 	#[derive(PartialEq)]
@@ -172,18 +180,17 @@ pub mod pallet {
 		/// Set the configuration of the Coretime chain.
 		///
 		/// - `origin`: Must be Root or pass `AdminOrigin`.
-		/// - `config`: The configuration the Coretime chain.
+		/// - `configuration`: The configuration of the Coretime chain.
 		#[pallet::call_index(0)]
 		#[pallet::weight(10_000)] // TODO
 		pub fn set_configuration(
 			origin: OriginFor<T>,
-			config: ConfigRecordOf<T>,
+			configuration: ConfigRecordOf<T>,
 		) -> DispatchResult {
 			T::AdminOrigin::ensure_origin_or_root(origin)?;
 
-			Configuration::<T>::put(config);
-			// TODO: event
-
+			Configuration::<T>::put(configuration.clone());
+			Self::deposit_event(Event::ConfigurationSet { configuration });
 			Ok(())
 		}
 
@@ -193,13 +200,12 @@ pub mod pallet {
 		/// - `next_order`: The timeslice at which to create the next order.
 		#[pallet::call_index(1)]
 		#[pallet::weight(10_000)] // TODO
-		pub fn set_next_order(origin: OriginFor<T>, next_order: Timeslice) -> DispatchResult {
+		pub fn schedule_next_order(origin: OriginFor<T>, next_order: Timeslice) -> DispatchResult {
 			T::AdminOrigin::ensure_origin_or_root(origin)?;
 
 			NextOrder::<T>::put(next_order);
 
-			// TODO: event
-
+			Self::deposit_event(Event::NextOrderScheduled { next_order });
 			Ok(())
 		}
 
@@ -216,9 +222,9 @@ pub mod pallet {
 		) -> DispatchResult {
 			T::AdminOrigin::ensure_origin_or_root(origin)?;
 
-			CoretimeRequirements::<T>::set(requirements);
-			// TODO: event
+			CoretimeRequirements::<T>::set(requirements.clone());
 
+			Self::deposit_event(Event::CoretimeRequirementSet { requirements });
 			Ok(())
 		}
 	}
