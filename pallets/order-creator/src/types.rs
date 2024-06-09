@@ -2,9 +2,7 @@ use codec::{Decode, Encode, MaxEncodedLen};
 pub use cumulus_primitives_core::ParaId;
 use frame_system::pallet_prelude::BlockNumberFor;
 use pallet_broker::{ConfigRecord, PartsOf57600, Timeslice};
-use scale_info::TypeInfo;
-#[cfg(not(feature = "std"))]
-use frame_support::pallet_prelude::*;
+use scale_info::{prelude::vec::Vec, TypeInfo};
 use sp_runtime::traits::BlockNumberProvider;
 
 /// Order identifier.

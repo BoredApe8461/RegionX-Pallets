@@ -2,6 +2,7 @@
 use crate::{types::CallEncoder, OrderRequirements, LOG_TARGET};
 use core::marker::PhantomData;
 use frame_support::weights::WeightToFee;
+use scale_info::prelude::vec;
 use sp_runtime::DispatchResult;
 use xcm::latest::prelude::*;
 
