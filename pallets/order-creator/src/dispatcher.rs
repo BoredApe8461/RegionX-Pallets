@@ -24,7 +24,10 @@ impl<T: crate::Config + pallet_xcm::Config> OrderDispatcher for DefaultOrderDisp
 
 		let message = Xcm(vec![
 			Instruction::BuyExecution {
-				fees: (MultiLocation::parent(), fee).into(),
+				fees: MultiAsset {
+					id: Concrete(MultiLocation::parent()),
+					fun: Fungible(fee.into()),
+				},
 				weight_limit: Unlimited, // TODO
 			},
 			Instruction::Transact {

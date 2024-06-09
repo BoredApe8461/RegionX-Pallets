@@ -42,8 +42,7 @@ pub mod pallet {
 		/// Relay chain balance type
 		type RelaychainBalance: Balance
 			+ Into<<Self::RelaychainCurrency as Inspect<Self::AccountId>>::Balance>
-			+ Into<cumulus_primitives_core::AssetInstance>
-			+ From<u32>;
+			+ Into<u128>;
 
 		/// A means of getting the current relay chain block.
 		///
