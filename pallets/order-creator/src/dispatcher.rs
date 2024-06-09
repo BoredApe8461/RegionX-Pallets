@@ -1,9 +1,9 @@
 // TODO: should this be a common file which is used by all the modules?
-use crate::{types::OrderCallCreator, OrderRequirements, LOG_TARGET};
-use codec::Encode;
+use crate::{types::CallEncoder, OrderRequirements, LOG_TARGET};
 use core::marker::PhantomData;
 use frame_support::weights::WeightToFee;
-use sp_runtime::DispatchResult;
+use scale_info::prelude::vec;
+use sp_runtime::{traits::Get, DispatchResult};
 use xcm::latest::prelude::*;
 
 /// Type able to dispatch coretime orders to the RegionX parachain.
@@ -15,16 +15,19 @@ pub trait OrderDispatcher {
 pub struct DefaultOrderDispatcher<T: crate::Config + pallet_xcm::Config>(PhantomData<T>);
 impl<T: crate::Config + pallet_xcm::Config> OrderDispatcher for DefaultOrderDispatcher<T> {
 	fn dispatch(requirements: OrderRequirements) -> DispatchResult {
-		let call = T::OrderCallCreator::create_order_call(requirements);
+		let call = T::CallEncoder::order_creation_call(requirements);
 
 		// `ref_time` = 53372000, we will round up to: 100000000.
 		// `proof_size` = 6156, we will round up to: 7000.
 		let call_weight = Weight::from_parts(100000000, 7000);
-		let fee = T::RegionXWeightToFee::weight_to_fee(&call_weight);
+		let fee = T::WeightToFee::weight_to_fee(&call_weight);
 
 		let message = Xcm(vec![
 			Instruction::BuyExecution {
-				fees: (MultiLocation::parent(), fee).into(),
+				fees: MultiAsset {
+					id: Concrete(<T as crate::Config>::RegionXLocation::get()),
+					fun: Fungible(fee.into()),
+				},
 				weight_limit: Unlimited, // TODO
 			},
 			Instruction::Transact {

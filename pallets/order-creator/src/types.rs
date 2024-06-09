@@ -2,7 +2,7 @@ use codec::{Decode, Encode, MaxEncodedLen};
 pub use cumulus_primitives_core::ParaId;
 use frame_system::pallet_prelude::BlockNumberFor;
 use pallet_broker::{ConfigRecord, PartsOf57600, Timeslice};
-use scale_info::TypeInfo;
+use scale_info::{prelude::vec::Vec, TypeInfo};
 use sp_runtime::traits::BlockNumberProvider;
 
 /// Order identifier.
@@ -36,7 +36,7 @@ pub struct GenericRequirements {
 	pub core_occupancy: PartsOf57600,
 }
 
-pub trait OrderCallCreator {
+pub trait CallEncoder {
 	/// Returns the runtime call which will create an order on the RegionX parachain.
-	fn create_order_call(order_requirements: OrderRequirements) -> Vec<u8>;
+	fn order_creation_call(order_requirements: OrderRequirements) -> Vec<u8>;
 }
