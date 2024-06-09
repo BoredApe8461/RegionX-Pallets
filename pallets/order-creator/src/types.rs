@@ -36,7 +36,7 @@ pub struct GenericRequirements {
 	pub core_occupancy: PartsOf57600,
 }
 
-pub trait OrderCallCreator {
+pub trait CallEncoder {
 	/// Returns the runtime call which will create an order on the RegionX parachain.
-	fn create_order_call(order_requirements: OrderRequirements) -> Vec<u8>;
+	fn order_creation_call(order_requirements: OrderRequirements) -> Vec<u8>;
 }

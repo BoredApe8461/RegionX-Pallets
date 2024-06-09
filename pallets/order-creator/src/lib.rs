@@ -40,7 +40,7 @@ pub mod pallet {
 		type RelaychainCurrency: Mutate<Self::AccountId>;
 
 		/// Relay chain balance type
-		type RelayBalance: Balance
+		type RelaychainBalance: Balance
 			+ Into<<Self::RelaychainCurrency as Inspect<Self::AccountId>>::Balance>
 			+ Into<cumulus_primitives_core::AssetInstance>
 			+ From<u32>;
@@ -57,10 +57,10 @@ pub mod pallet {
 		type OrderDispatcher: OrderDispatcher;
 
 		/// Type which will return the scale encoded call for creating an order.
-		type OrderCallCreator: OrderCallCreator;
+		type CallEncoder: CallEncoder;
 
-		/// Types for getting the fee for RegionX parachain calls.
-		type RegionXWeightToFee: WeightToFee<Balance = Self::RelayBalance>;
+		/// Type for weight to fee conversion on the ReigonX parachain.
+		type WeightToFee: WeightToFee<Balance = Self::RelaychainBalance>;
 
 		/// Number of Relay-chain blocks per timeslice.
 		#[pallet::constant]
