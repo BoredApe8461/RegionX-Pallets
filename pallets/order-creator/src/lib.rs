@@ -29,6 +29,7 @@ pub mod pallet {
 	};
 	use frame_system::pallet_prelude::*;
 	use sp_runtime::traits::BlockNumberProvider;
+	use xcm::opaque::lts::MultiLocation;
 
 	/// The module configuration trait.
 	#[pallet::config]
@@ -48,6 +49,9 @@ pub mod pallet {
 		///
 		/// This is used for determining the current timeslice.
 		type RCBlockNumberProvider: BlockNumberProvider;
+
+		/// The RegionX parachain location to which the orders are sent.
+		type RegionXLocation: Get<MultiLocation>;
 
 		/// The admin origin for managing the order creation.
 		type AdminOrigin: EnsureOrigin<Self::RuntimeOrigin>;

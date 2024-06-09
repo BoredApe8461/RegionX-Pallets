@@ -3,7 +3,7 @@ use crate::{types::CallEncoder, OrderRequirements, LOG_TARGET};
 use core::marker::PhantomData;
 use frame_support::weights::WeightToFee;
 use scale_info::prelude::vec;
-use sp_runtime::DispatchResult;
+use sp_runtime::{traits::Get, DispatchResult};
 use xcm::latest::prelude::*;
 
 /// Type able to dispatch coretime orders to the RegionX parachain.
@@ -25,7 +25,7 @@ impl<T: crate::Config + pallet_xcm::Config> OrderDispatcher for DefaultOrderDisp
 		let message = Xcm(vec![
 			Instruction::BuyExecution {
 				fees: MultiAsset {
-					id: Concrete(MultiLocation::parent()),
+					id: Concrete(<T as crate::Config>::RegionXLocation::get()),
 					fun: Fungible(fee.into()),
 				},
 				weight_limit: Unlimited, // TODO
