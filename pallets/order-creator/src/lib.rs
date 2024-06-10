@@ -140,7 +140,7 @@ pub mod pallet {
 			};
 
 			weight += T::DbWeight::get().reads(1);
-			let Some(next_order) = NextOrder::<T>::get() else {
+			let Some(current_order) = NextOrder::<T>::get() else {
 				log::warn!(
 					target: LOG_TARGET,
 					"The timeslice for the next order not set",
@@ -148,7 +148,7 @@ pub mod pallet {
 				return weight;
 			};
 
-			if Self::current_timeslice() >= next_order {
+			if Self::current_timeslice() >= current_order {
 				weight += T::DbWeight::get().reads(1);
 				let Some(generic) = CoretimeRequirements::<T>::get() else {
 					log::warn!(
@@ -159,8 +159,8 @@ pub mod pallet {
 				};
 
 				let requirements = OrderRequirements {
-					begin: next_order,
-					end: next_order.saturating_add(config.region_length),
+					begin: current_order,
+					end: current_order.saturating_add(config.region_length),
 					core_occupancy: generic.core_occupancy,
 				};
 				if let Err(e) = T::OrderDispatcher::dispatch(requirements) {
@@ -170,6 +170,8 @@ pub mod pallet {
 						e
 					);
 				}
+				// TODO: better naming for 'current_order'.
+				NextOrder::<T>::set(Some(current_order.saturating_add(config.region_length)));
 				// TODO: account for the dispatcher weight consumption:
 				weight
 			} else {

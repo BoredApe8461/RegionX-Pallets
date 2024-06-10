@@ -25,7 +25,7 @@ impl<T: crate::Config + pallet_xcm::Config> OrderDispatcher for DefaultOrderDisp
 		let message = Xcm(vec![
 			Instruction::BuyExecution {
 				fees: MultiAsset {
-					id: Concrete(<T as crate::Config>::RegionXLocation::get()),
+					id: Concrete(MultiLocation::parent()),
 					fun: Fungible(fee.into()),
 				},
 				weight_limit: Unlimited, // TODO
@@ -37,7 +37,11 @@ impl<T: crate::Config + pallet_xcm::Config> OrderDispatcher for DefaultOrderDisp
 			},
 		]);
 
-		match pallet_xcm::Pallet::<T>::send_xcm(Here, MultiLocation::parent(), message) {
+		match pallet_xcm::Pallet::<T>::send_xcm(
+			Here,
+			<T as crate::Config>::RegionXLocation::get(),
+			message,
+		) {
 			Ok(_) => log::debug!(
 				target: LOG_TARGET,
 				"Coretime order sent successfully"
