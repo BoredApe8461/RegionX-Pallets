@@ -19,16 +19,21 @@ impl<T: crate::Config + pallet_xcm::Config> OrderDispatcher for DefaultOrderDisp
 
 		// `ref_time` = 53372000, we will round up to: 100000000.
 		// `proof_size` = 6156, we will round up to: 7000.
-		let call_weight = Weight::from_parts(100000000, 7000);
-		let fee = T::WeightToFee::weight_to_fee(&call_weight);
+		let call_weight = Weight::from_parts(5_000_000_000, 500_000);
+		// let fee = T::WeightToFee::weight_to_fee(&call_weight);
+		let fee = 50_000_000_000_000u128;
 
 		let message = Xcm(vec![
+			Instruction::WithdrawAsset(
+				MultiAsset { id: Concrete(MultiLocation::parent()), fun: Fungible(fee.into()) }
+					.into(),
+			),
 			Instruction::BuyExecution {
 				fees: MultiAsset {
 					id: Concrete(MultiLocation::parent()),
 					fun: Fungible(fee.into()),
 				},
-				weight_limit: Unlimited, // TODO
+				weight_limit: Unlimited,
 			},
 			Instruction::Transact {
 				origin_kind: OriginKind::SovereignAccount,
@@ -42,7 +47,7 @@ impl<T: crate::Config + pallet_xcm::Config> OrderDispatcher for DefaultOrderDisp
 			<T as crate::Config>::RegionXLocation::get(),
 			message,
 		) {
-			Ok(_) => log::debug!(
+			Ok(_) => log::info!(
 				target: LOG_TARGET,
 				"Coretime order sent successfully"
 			),
