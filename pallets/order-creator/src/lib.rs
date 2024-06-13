@@ -10,6 +10,12 @@ use sp_runtime::SaturatedConversion;
 mod types;
 pub use crate::types::*;
 
+#[cfg(test)]
+mod mock;
+
+#[cfg(test)]
+mod tests;
+
 mod dispatcher;
 pub use crate::dispatcher::*;
 
