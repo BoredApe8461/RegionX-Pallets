@@ -13,16 +13,25 @@
 // You should have received a copy of the GNU General Public License
 // along with RegionX.  If not, see <https://www.gnu.org/licenses/>.
 
+use crate::ParaId;
+use codec::{Decode, Encode};
 use frame_support::{
 	pallet_prelude::*,
 	parameter_types,
-	traits::{nonfungible::Mutate, Everything},
+	traits::Everything,
+	weights::{
+		constants::ExtrinsicBaseWeight, WeightToFeeCoefficient, WeightToFeeCoefficients,
+		WeightToFeePolynomial,
+	},
 };
-use sp_core::H256;
+use frame_system::EnsureRoot;
+use smallvec::smallvec;
+use sp_core::{ConstU64, H256};
 use sp_runtime::{
 	traits::{BlakeTwo256, BlockNumberProvider, IdentityLookup},
-	BuildStorage, DispatchResult,
+	BuildStorage, Perbill,
 };
+use xcm::latest::prelude::*;
 
 type Block = frame_system::mocking::MockBlock<Test>;
 
@@ -30,6 +39,7 @@ frame_support::construct_runtime!(
 	pub enum Test
 	{
 		System: frame_system::{Pallet, Call, Config<T>, Storage, Event<T>},
+		Balances: pallet_balances,
 		OrderCreator: crate::{Pallet, Call, Storage, Event<T>}
 	}
 );
@@ -37,6 +47,7 @@ frame_support::construct_runtime!(
 parameter_types! {
 	pub const BlockHashCount: u64 = 250;
 	pub const SS58Prefix: u8 = 42;
+	pub const AnyNetwork: Option<NetworkId> = None;
 }
 
 impl frame_system::Config for Test {
@@ -83,8 +94,28 @@ impl pallet_balances::Config for Test {
 	type MaxFreezes = ();
 }
 
+pub const MILLIUNIT: u64 = 1_000_000_000;
+pub struct WeightToFee;
+impl WeightToFeePolynomial for WeightToFee {
+	type Balance = u64;
+	fn polynomial() -> WeightToFeeCoefficients<Self::Balance> {
+		// in Rococo, extrinsic base weight (smallest non-zero weight) is mapped to 1 MILLIUNIT:
+		// in our template, we map to 1/10 of that, or 1/10 MILLIUNIT
+		let p = MILLIUNIT / 10;
+		let q = 100 * u64::from(ExtrinsicBaseWeight::get().ref_time());
+		smallvec![WeightToFeeCoefficient {
+			degree: 1,
+			negative: false,
+			coeff_frac: Perbill::from_rational(p % q, q),
+			coeff_integer: p / q,
+		}]
+	}
+}
+
 parameter_types! {
 	pub static RelayBlockNumber: u64 = 0;
+	// The location of the RegionX parachain.
+	pub const RegionXLocation: MultiLocation = MultiLocation { parents: 1, interior: X1(Parachain(2000)) };
 }
 
 pub struct RelayBlockNumberProvider;
@@ -95,16 +126,51 @@ impl BlockNumberProvider for RelayBlockNumberProvider {
 	}
 }
 
+use crate::OrderRequirements;
+
+#[derive(Encode, Decode)]
+enum RegionXRuntimeCalls {
+	#[codec(index = 92)]
+	Orders(OrderPalletCalls),
+}
+
+/// RegionX coretime pallet calls.
+//
+// NOTE: We only use the `CreateOrder` call.
+#[derive(Encode, Decode)]
+enum OrderPalletCalls {
+	#[codec(index = 0)]
+	CreateOrder(ParaId, OrderRequirements),
+}
+
+pub struct CallEncoder;
+impl crate::CallEncoder for CallEncoder {
+	fn order_creation_call(requirements: OrderRequirements) -> Vec<u8> {
+		RegionXRuntimeCalls::Orders(OrderPalletCalls::CreateOrder(
+			2001.into(), // dummy para id.
+			requirements,
+		))
+		.encode()
+	}
+}
+
+pub struct DummyOrderDispatcher;
+impl crate::OrderDispatcher for DummyOrderDispatcher {
+	fn dispatch(_requirements: OrderRequirements) -> DispatchResult {
+		Ok(())
+	}
+}
+
 impl crate::Config for Test {
 	type RuntimeEvent = RuntimeEvent;
 	type RelaychainCurrency = Balances;
-	type RelaychainBalance = Balances;
+	type RelaychainBalance = u64;
 	type RCBlockNumberProvider = RelayBlockNumberProvider;
-	// type RegionXLocation = ();
-	// type AdminOrigin = RuntimeOrigin;
-	// type OrderDispatcher = RuntimeCall;
-	// type CallEncoder = CallEncoder;
-	// type WeightToFee = WeightToFee;
+	type RegionXLocation = RegionXLocation;
+	type AdminOrigin = EnsureRoot<<Test as frame_system::Config>::AccountId>;
+	type OrderDispatcher = DummyOrderDispatcher;
+	type CallEncoder = CallEncoder;
+	type WeightToFee = WeightToFee;
 	type TimeslicePeriod = ConstU64<80>;
 	type WeightInfo = ();
 }

@@ -11,9 +11,7 @@ targets = ["x86_64-unknown-linux-gnu"]
 [dependencies]
 log = { workspace = true, default-features = false }
 codec = { workspace = true, default-features = false, features = ["derive"] }
-scale-info = { workspace = true, default-features = false, features = [
-	"derive",
-] }
+scale-info = { workspace = true, default-features = false, features = ["derive"] }
 
 # Substrate
 cumulus-primitives-core = { workspace = true, default-features = false }
@@ -32,6 +30,7 @@ xcm-executor = { workspace = true, default-features = false }
 
 [dev-dependencies]
 serde = { workspace = true }
+smallvec = { workspace = true }
 pallet-balances = { workspace = true, default-features = false }
 
 [features]
@@ -49,6 +48,7 @@ std = [
 	"frame-support/std",
 	"frame-system/std",
 	"pallet-broker/std",
+	"pallet-balances/std",
 	"pallet-xcm/std",
 	"xcm/std",
 	"xcm-builder/std",

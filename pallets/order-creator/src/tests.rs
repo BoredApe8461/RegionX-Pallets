@@ -12,3 +12,10 @@
 //
 // You should have received a copy of the GNU General Public License
 // along with RegionX.  If not, see <https://www.gnu.org/licenses/>.
+
+use crate::mock::*;
+
+#[test]
+fn set_configuration_works() {
+	new_test_ext().execute_with(|| {})
+}
