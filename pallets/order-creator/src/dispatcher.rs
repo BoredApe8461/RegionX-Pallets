@@ -1,7 +1,6 @@
 // TODO: should this be a common file which is used by all the modules?
 use crate::{types::CallEncoder, OrderRequirements, LOG_TARGET};
 use core::marker::PhantomData;
-use frame_support::weights::WeightToFee;
 use scale_info::prelude::vec;
 use sp_runtime::{traits::Get, DispatchResult};
 use xcm::latest::prelude::*;

@@ -34,6 +34,9 @@ use sp_runtime::{
 use xcm::latest::prelude::*;
 
 type Block = frame_system::mocking::MockBlock<Test>;
+type AccountId = u64;
+
+pub const ALICE: AccountId = 1;
 
 frame_support::construct_runtime!(
 	pub enum Test
