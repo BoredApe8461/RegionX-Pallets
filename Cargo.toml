@@ -1,8 +1,6 @@
 [workspace]
 resolver = "2"
-members = [
-	"pallets/*",
-]
+members = ["pallets/*"]
 
 [workspace.package]
 name = "regionx-pallets"
@@ -11,7 +9,7 @@ authors = ["RegionX"]
 description = "Pallets facilitating coretime procurement"
 license = "GPLv3"
 homepage = "https://regionx.tech/"
-repository = "https://github.com/RegionX-Labs/RegionX-Node"
+repository = "https://github.com/RegionX-Labs/RegionX-Pallets"
 edition = "2021"
 
 [workspace.dependencies]
