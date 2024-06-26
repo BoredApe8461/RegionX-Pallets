@@ -2,10 +2,10 @@
 
 #![cfg_attr(not(feature = "std"), no_std)]
 
-use frame_system::WeightInfo;
 pub use pallet::*;
 use pallet_broker::Timeslice;
 use sp_runtime::SaturatedConversion;
+use frame_support::pallet_prelude::Weight;
 
 mod types;
 pub use crate::types::*;
@@ -18,6 +18,12 @@ mod tests;
 
 #[cfg(feature = "runtime-benchmarks")]
 mod benchmarking;
+
+pub trait WeightInfo {
+	fn set_configuration() -> Weight;
+	fn schedule_next_order() -> Weight;
+	fn set_coretime_requirements() -> Weight;
+}
 
 mod dispatcher;
 pub use crate::dispatcher::*;
@@ -196,7 +202,7 @@ pub mod pallet {
 		/// - `origin`: Must be Root or pass `AdminOrigin`.
 		/// - `configuration`: The configuration of the Coretime chain.
 		#[pallet::call_index(0)]
-		#[pallet::weight(10_000)] // TODO
+		#[pallet::weight(T::WeightInfo::set_configuration())]
 		pub fn set_configuration(
 			origin: OriginFor<T>,
 			configuration: ConfigRecordOf<T>,
@@ -213,7 +219,7 @@ pub mod pallet {
 		/// - `origin`: Must be Root or pass `AdminOrigin`.
 		/// - `next_order`: The timeslice at which to create the next order.
 		#[pallet::call_index(1)]
-		#[pallet::weight(10_000)] // TODO
+		#[pallet::weight(T::WeightInfo::schedule_next_order())]
 		pub fn schedule_next_order(origin: OriginFor<T>, next_order: Timeslice) -> DispatchResult {
 			T::AdminOrigin::ensure_origin_or_root(origin)?;
 
@@ -229,7 +235,7 @@ pub mod pallet {
 		/// - `requirements`: The coretime requirements of the parachain. If set to `None` the
 		///   pallet will stop with the order creation.
 		#[pallet::call_index(2)]
-		#[pallet::weight(10_000)] // TODO
+		#[pallet::weight(T::WeightInfo::set_coretime_requirements())]
 		pub fn set_coretime_requirements(
 			origin: OriginFor<T>,
 			requirements: Option<GenericRequirements>,
