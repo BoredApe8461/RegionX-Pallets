@@ -1,4 +1,3 @@
-// TODO: should this be a common file which is used by all the modules?
 use crate::{types::CallEncoder, OrderRequirements, LOG_TARGET};
 use core::marker::PhantomData;
 use frame_support::weights::WeightToFee;

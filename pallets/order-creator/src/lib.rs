@@ -2,10 +2,10 @@
 
 #![cfg_attr(not(feature = "std"), no_std)]
 
+use frame_support::pallet_prelude::Weight;
 pub use pallet::*;
 use pallet_broker::Timeslice;
 use sp_runtime::SaturatedConversion;
-use frame_support::pallet_prelude::Weight;
 
 mod types;
 pub use crate::types::*;
@@ -19,16 +19,29 @@ mod tests;
 #[cfg(feature = "runtime-benchmarks")]
 mod benchmarking;
 
+mod dispatcher;
+pub use crate::dispatcher::*;
+
+const LOG_TARGET: &str = "runtime::order-creator";
+
 pub trait WeightInfo {
 	fn set_configuration() -> Weight;
 	fn schedule_next_order() -> Weight;
 	fn set_coretime_requirements() -> Weight;
 }
 
-mod dispatcher;
-pub use crate::dispatcher::*;
-
-const LOG_TARGET: &str = "runtime::order-creator";
+pub struct TestWeightInfo;
+impl WeightInfo for TestWeightInfo {
+	fn set_configuration() -> Weight {
+		Default::default()
+	}
+	fn schedule_next_order() -> Weight {
+		Default::default()
+	}
+	fn set_coretime_requirements() -> Weight {
+		Default::default()
+	}
+}
 
 #[frame_support::pallet]
 pub mod pallet {

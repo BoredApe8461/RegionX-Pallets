@@ -175,7 +175,7 @@ impl crate::Config for Test {
 	type CallEncoder = CallEncoder;
 	type WeightToFee = WeightToFee;
 	type TimeslicePeriod = ConstU64<80>;
-	type WeightInfo = ();
+	type WeightInfo = crate::TestWeightInfo;
 }
 
 // Build genesis storage according to the mock runtime.

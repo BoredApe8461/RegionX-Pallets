@@ -20,11 +20,10 @@
 use super::*;
 
 use frame_benchmarking::v2::*;
-use frame_support::traits::Get;
-use frame_system::RawOrigin;
 fn assert_last_event<T: Config>(generic_event: <T as Config>::RuntimeEvent) {
 	frame_system::Pallet::<T>::assert_last_event(generic_event.into());
 }
+use frame_support::assert_ok;
 use frame_system::pallet_prelude::BlockNumberFor;
 use pallet_broker::ConfigRecord;
 
@@ -80,6 +79,18 @@ mod benchmarks {
 		_(origin as T::RuntimeOrigin, requirements.clone());
 
 		assert_last_event::<T>(Event::CoretimeRequirementSet { requirements }.into());
+		Ok(())
+	}
+
+	#[benchmark]
+	fn dispatch() -> Result<(), BenchmarkError> {
+		let requirements = OrderRequirements { begin: 0, end: 80, core_occupancy: 28800u16.into() };
+
+		#[block]
+		{
+			assert_ok!(T::OrderDispatcher::dispatch(requirements));
+		}
+
 		Ok(())
 	}
 
