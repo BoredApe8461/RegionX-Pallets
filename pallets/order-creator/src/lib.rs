@@ -28,6 +28,7 @@ pub trait WeightInfo {
 	fn set_configuration() -> Weight;
 	fn schedule_next_order() -> Weight;
 	fn set_coretime_requirements() -> Weight;
+	fn dispatch() -> Weight;
 }
 
 pub struct TestWeightInfo;
@@ -39,6 +40,9 @@ impl WeightInfo for TestWeightInfo {
 		Default::default()
 	}
 	fn set_coretime_requirements() -> Weight {
+		Default::default()
+	}
+	fn dispatch() -> Weight {
 		Default::default()
 	}
 }
@@ -207,8 +211,10 @@ pub mod pallet {
 						e
 					);
 				}
+				weight.saturating_add(T::WeightInfo::dispatch());
+				weight += T::DbWeight::get().writes(1);
 				NextOrder::<T>::set(Some(region_begin));
-				// TODO: account for the dispatcher weight consumption:
+
 				weight
 			} else {
 				weight
