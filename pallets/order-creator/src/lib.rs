@@ -168,7 +168,7 @@ pub mod pallet {
 			};
 
 			weight += T::DbWeight::get().reads(1);
-			let Some(current_order) = NextOrder::<T>::get() else {
+			let Some(next_order) = NextOrder::<T>::get() else {
 				log::warn!(
 					target: LOG_TARGET,
 					"The timeslice for the next order not set",
@@ -176,7 +176,7 @@ pub mod pallet {
 				return weight;
 			};
 
-			if Self::current_timeslice() >= current_order {
+			if Self::current_timeslice() >= next_order {
 				weight += T::DbWeight::get().reads(1);
 				let Some(generic) = CoretimeRequirements::<T>::get() else {
 					log::warn!(
@@ -185,10 +185,19 @@ pub mod pallet {
 					);
 					return weight;
 				};
+				// From here on we treat the `next_order` as the current order.
+				let current_order = next_order;
+
+				// We are making the order at the start of the bulk period, so the region we are
+				// looking for should cover the upcoming bulk period.
+				//
+				// `region_length` is always exactly one bulk period.
+				let region_begin = current_order.saturating_add(config.region_length);
+				let region_end = region_begin.saturating_add(config.region_length);
 
 				let requirements = OrderRequirements {
-					begin: current_order,
-					end: current_order.saturating_add(config.region_length),
+					begin: region_begin,
+					end: region_end,
 					core_occupancy: generic.core_occupancy,
 				};
 				if let Err(e) = T::OrderDispatcher::dispatch(requirements) {
@@ -198,8 +207,7 @@ pub mod pallet {
 						e
 					);
 				}
-				// TODO: better naming for 'current_order'.
-				NextOrder::<T>::set(Some(current_order.saturating_add(config.region_length)));
+				NextOrder::<T>::set(Some(region_begin));
 				// TODO: account for the dispatcher weight consumption:
 				weight
 			} else {
