@@ -1,8 +1,6 @@
 [workspace]
 resolver = "2"
-members = [
-	"pallets/*",
-]
+members = ["pallets/*"]
 
 [workspace.package]
 name = "regionx-pallets"
@@ -11,13 +9,17 @@ authors = ["RegionX"]
 description = "Pallets facilitating coretime procurement"
 license = "GPLv3"
 homepage = "https://regionx.tech/"
-repository = "https://github.com/RegionX-Labs/RegionX-Node"
+repository = "https://github.com/RegionX-Labs/RegionX-Pallets"
 edition = "2021"
 
 [workspace.dependencies]
+serde = { version = "1.0.201", default-features = false }
+smallvec = "1.11.0"
 codec = { package = "parity-scale-codec", version = "3.0.0", default-features = false }
 log = { version = "0.4.20", default-features = false }
 scale-info = { version = "2.11.3", default-features = false }
+
+cumulus-primitives-core = { version = "0.7.0", default-features = false }
 
 frame-benchmarking = { version = "28.0.0", default-features = false }
 frame-support = { version = "28.0.0", default-features = false }
@@ -26,6 +28,14 @@ frame-system = { version = "28.0.0", default-features = false }
 sp-io = { version = "30.0.0", default-features = false }
 sp-core = { version = "28.0.0", default-features = false }
 sp-runtime = { version = "31.0.0", default-features = false }
+
+pallet-broker = { version = "0.6.0", default-features = false }
+pallet-balances = { version = "28.0.0", default-features = false }
+pallet-xcm = { version = "7.0.0", default-features = false }
+
+xcm = { version = "7.0.0", package = "staging-xcm", default-features = false }
+xcm-builder = { version = "7.0.3", package = "staging-xcm-builder", default-features = false }
+xcm-executor = { version = "7.0.3", package = "staging-xcm-executor", default-features = false }
 
 # Local
 pallet-order-creator = { path = "./pallets/order-creator", default-features = false }
