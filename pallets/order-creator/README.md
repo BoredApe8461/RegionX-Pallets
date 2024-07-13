@@ -12,7 +12,7 @@ As already mentioned, given that parachains are decentralized, transparent, and 
 
 To solve this problem, we created the orders pallet, which provides a way for parachains to interact with the secondary market in a decentralized, community-driven way.
 
-The way orders work is that every parachain periodically, at the start of a bulk period, posts its coretime requirements. This will indicate to coretime traders the demand that exists. Each order is initially allocated zero tokens. Anyone, including the parachain itself, can participate in order crowdfunding. The tokens collected from the participants will incentivize someone to fulfill the order, i.e., sell coretime to it. The crowdfunded amount will be allocated to the trader that fulfills the order.
+The way orders work is that every parachain periodically, at the start of a bulk period, posts its coretime requirements. This will indicate to coretime traders the existing demand. Each order is initially allocated zero tokens. Anyone, including the parachain itself, can participate in order crowdfunding. The tokens collected from the participants will incentivize someone to fulfill the order, i.e., sell coretime to it. The crowdfunded amount will be allocated to the trader that fulfills the order.
 
 There can be multiple incentives to fund the parachain's order. If people rely on the parachain's services, they might not need any additional incentive other than the risk associated with the parachain stopping execution. 
 
