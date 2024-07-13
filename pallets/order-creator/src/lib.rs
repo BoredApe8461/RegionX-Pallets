@@ -204,6 +204,7 @@ pub mod pallet {
 					end: region_end,
 					core_occupancy: generic.core_occupancy,
 				};
+				weight.saturating_add(T::WeightInfo::dispatch());
 				if let Err(e) = T::OrderDispatcher::dispatch(requirements) {
 					log::error!(
 						target: LOG_TARGET,
@@ -211,7 +212,6 @@ pub mod pallet {
 						e
 					);
 				}
-				weight.saturating_add(T::WeightInfo::dispatch());
 				weight += T::DbWeight::get().writes(1);
 				NextOrder::<T>::set(Some(region_begin));
 
@@ -251,7 +251,6 @@ pub mod pallet {
 			T::AdminOrigin::ensure_origin_or_root(origin)?;
 
 			NextOrder::<T>::put(next_order);
-
 			Self::deposit_event(Event::NextOrderScheduled { next_order });
 			Ok(())
 		}
@@ -270,7 +269,6 @@ pub mod pallet {
 			T::AdminOrigin::ensure_origin_or_root(origin)?;
 
 			CoretimeRequirements::<T>::set(requirements.clone());
-
 			Self::deposit_event(Event::CoretimeRequirementSet { requirements });
 			Ok(())
 		}
